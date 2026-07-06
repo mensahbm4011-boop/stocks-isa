@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Stock Portfolio Demo</title>
+  <style>
+    :root {
+      --bg: #05080d;
+      --card: #111820;
+      --line: #1f2d39;
+      --text: #f5f7fb;
+      --muted: #8b96a6;
+      --blue: #2aa8ff;
+      --green: #6dff8c;
+      --red: #ff5d6c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top right, #0c2b3c 0%, var(--bg) 42%);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 430px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px 18px 90px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 26px;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: .5px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .logo {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), #005aff);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.3px;
+      flex-shrink:0;
+    }
+
+    .icons { color: var(--muted); font-size: 22px; }
+
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .9px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 56px;
+      line-height: 1;
+      margin: 10px 0 20px;
+      font-weight: 500;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .stat-value {
+      color: var(--green);
+      font-size: 22px;
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .pill {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      background: #202832;
+      color: #e8edf5;
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      background: #95a0ad;
+      border-radius: 50%;
+    }
+
+        .chart-card {
+      position: relative;
+      background: linear-gradient(180deg, rgba(10,55,77,.9), rgba(6,12,19,.5));
+      border: 1px solid rgba(42,168,255,.14);
+      border-radius: 22px;
+      padding: 16px 10px 10px;
+      margin-bottom: 18px;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .chart-meta {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      z-index: 3;
+      background: rgba(5,8,13,.68);
+      border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 8px 10px;
+      pointer-events: none;
+    }
+
+    .chart-date {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .chart-mini-value {
+      margin-top: 2px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    svg { width: 100%; height: 190px; display: block; }
+
+    .tabs {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-weight: 700;
+      margin-top: 4px;
+      padding: 0 10px;
+    }
+
+    .tabs span {
+      padding: 10px 12px;
+      border-radius: 18px;
+    }
+
+    .tabs .active {
+      color: white;
+      background: #1b2029;
+    }
+
+    .panel {
+      background: rgba(17,24,32,.92);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid #273442;
+      background: #090f16;
+      color: white;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 10px;
+      border-radius: 16px;
+      border: 1px solid #202c38;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 100%;
+      font-size: 12px;
+      background: #0a1017;
+    }
+
+    thead th {
+      background: #111820;
+    }
+
+    th, td {
+      padding: 11px 6px;
+      border-bottom: 1px solid #22303c;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th:first-child, td:first-child { text-align:center; width:28px; } th:nth-child(2), td:nth-child(2){text-align:left;}
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    tbody tr.active-row {
+      background: linear-gradient(90deg, rgba(42,168,255,.22), rgba(42,168,255,.05));
+      outline: 1px solid rgba(42,168,255,.55);
+      outline-offset: -1px;
+    }
+
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      background: rgba(9,15,22,.96);
+      border-top: 1px solid #1f2d39;
+      display: flex;
+      justify-content: space-around;
+      padding: 13px 0 20px;
+      color: var(--muted);
+      font-size: 24px;
+    }
+
+    .bottom-nav .active { color: var(--blue); }
+
+    @media (max-width: 360px) {
+      .value { font-size: 46px; }
+      .hero-tag { font-size: 23px; }
+    }
+
+    @media (max-width: 430px) {
+      .app { padding-left: 14px; padding-right: 14px; }
+      .value { font-size: 48px; }
+      .chart-card { padding-left: 6px; padding-right: 6px; }
+      th, td { padding: 10px 5px; font-size: 11px; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
+      .table-wrap { overflow-x: hidden; }
+      .panel { padding: 13px; }
+      .brand { gap: 6px; }
+      .logo { width: 28px; height: 28px; }
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="topbar">
+      <div class="brand"><div class="logo">BM</div>
+<select id="accountSelect" style="background:transparent;border:none;color:white;font-weight:800;font-size:13px;outline:none;cursor:pointer;max-width:190px;">
+  <option selected>Account: 20876414</option>
+  <option>Account: 14590382</option>
+  <option>Account: 78241659</option>
+  <option>Account: 39187520</option>
+</select>
+</div>
+      <div class="icons">⚙︎</div>
+    </section>
+
+    <section>
+      <div class="label">Account Value</div>
+      <div class="value" id="accountValue">€3.215,94</div>
+
+      <div class="stats">
+        <div>
+          <div class="label">Total Profit</div>
+          <div class="stat-value" id="profit">↗ €315,94</div>
+        </div>
+        <div>
+          <div class="label">Rate of Return</div>
+          <div class="stat-value" id="returnRate">↗ 10,89%</div>
+        </div>
+      </div>
+
+      <div class="pill"><span class="dot"></span><span id="netDeposits">€2.900,00 Net deposits</span></div>
+    </section>
+
+        <section class="chart-card" id="chartCard">
+      <div class="chart-meta">
+        <div class="chart-date" id="chartDate">Vandaag</div>
+        <div class="chart-mini-value" id="chartMiniValue">€0</div>
+      </div>
+
+      <svg id="chartSvg" viewBox="0 0 360 190" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#2aa8ff" stop-opacity=".36"/>
+            <stop offset="100%" stop-color="#2aa8ff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path id="area" fill="url(#fill)"></path>
+        <polyline id="line" fill="none" stroke="#2aa8ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        <line id="markerLine" x1="0" y1="22" x2="0" y2="176" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-dasharray="4 4"></line>
+        <circle id="markerDot" cx="0" cy="0" r="6" fill="#ffffff" stroke="#2aa8ff" stroke-width="4"></circle>
+      </svg>
+
+      <div class="tabs">
+        <span>1D</span><span>1W</span><span>1M</span><span class="active">3M</span><span>1Y</span><span>MAX</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <span>Portfolio</span>
+        
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th></th><th>Date</th>
+              <th>Deposits</th>
+              <th>Value</th>
+              <th>Month %</th>
+              <th>Profit</th>
+              <th>ROI</th>
+            </tr>
+          </thead>
+          <tbody id="portfolioTable"></tbody>
+        </table>
+      </div>
+    </section>
+     <section class="panel">
+      <div class="panel-title">Simulation</div>
+      <div class="input-grid">
+        <div>
+          <label>Initial investment</label>
+          <input id="startAmount" type="number" value="2900" min="0">
+        </div>
+        <div>
+          <label>Annual return %</label>
+          <input id="annualReturn" type="number" value="23.6" step="0.1">
+        </div>
+        <div>
+          <label>Monthelijkse inleg</label>
+          <input id="monthlyDeposit" type="number" value="100" min="0">
+        </div>
+        <div>
+          <label>Period</label>
+          <select id="years">
+            <option>1</option><option>2</option><option>3</option><option>5</option><option selected>7</option><option>10</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+ </main>
+
+  <nav class="bottom-nav">
+    <span class="active">⌂</span><span>◔</span><span>▣</span><span>☰</span>
+  </nav>
+
+  <script>
+    const startAmount = document.getElementById('startAmount');
+    const annualReturn = document.getElementById('annualReturn');
+    const monthlyDeposit = document.getElementById('monthlyDeposit');
+    const years = document.getElementById('years');
+    const tbody = document.getElementById('portfolioTable');
+    const chartCard = document.getElementById('chartCard');
+    const chartSvg = document.getElementById('chartSvg');
+
+    let rows = [];
+    let chartPoints = [];
+    let selectedIndex = 83;
+
+    const euro = value => new Intl.NumberFormat('nl-NL', {
+      style: 'currency', currency: 'EUR'
+    }).format(value);
+
+    const dateLabel = date => {
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const yy = String(date.getFullYear()).slice(-2);
+      return `${dd}/${mm}/${yy}`;
+    };
+
+    function calculateSeries() {
+      const start = Number(startAmount.value || 0);
+      const yearly = Number(annualReturn.value || 0) / 100;
+      const deposit = Number(monthlyDeposit.value || 0);
+      let totalMonths = Number(years.value) * 12;
+      if (Number(years.value) === 7) totalMonths = 91;
+      const baseMonthlyRate = Math.pow(1 + yearly, 1 / 12) - 1;
+      const startDate = new Date(2019, 0, 1);
+
+      let value = start;
+      let invested = start;
+      const result = [];
+
+      // Meer schommelingen, maar geen negatieve maandrendementen.
+      // De maandelijkse return blijft minimaal positief, zodat de portfolio niet per maand in de min gaat.
+      function marketNoise(month) {
+        const wave1 = Math.sin(month * 0.85) * 0.012;
+        const wave2 = Math.sin(month * 1.95 + 1.6) * 0.008;
+        const wave3 = Math.sin(month * 0.31 + 2.2) * 0.006;
+        const pseudoRandom = Math.sin(month * 12.9898) * 43758.5453;
+        const noise = (pseudoRandom - Math.floor(pseudoRandom) - 0.5) * 0.014;
+
+        // Korte zachtere terugvallen, maar niet genoeg om maandresultaat negatief te maken.
+        const dips = {
+          7: -0.018,
+          14: -0.024,
+          23: -0.020,
+          31: -0.026,
+          44: -0.022,
+          53: -0.028,
+          67: -0.020,
+          78: -0.026,
+          88: -0.018
+        };
+
+        return wave1 + wave2 + wave3 + noise + (dips[month] || 0);
+      }
+
+      for (let m = 1; m <= totalMonths; m++) {
+        if (m > 1) {
+          value += deposit;
+          invested += deposit;
+        }
+
+        const monthlyReturn = Math.max(0.0025, baseMonthlyRate + marketNoise(m));
+        value *= (1 + monthlyReturn);
+
+        const d = new Date(startDate);
+        d.setMonth(startDate.getMonth() + m - 1);
+        const daySeed = Math.sin(m * 9.731) * 10000;
+        const randomDay = Math.floor((daySeed - Math.floor(daySeed)) * 26) + 1;
+        d.setDate(randomDay);
+
+        const profit = value - invested;
+
+        result.push({
+          month: m,
+          date: d,
+          invested,
+          value,
+          monthlyReturn,
+          profit,
+          roi: invested > 0 ? profit / invested * 100 : 0
+        });
+      }
+
+      return result;
+    }
+
+    function drawChart() {
+      const values = rows.map(r => r.value);
+      const min = Math.min(...values) * .98;
+      const max = Math.max(...values) * 1.02;
+
+      chartPoints = rows.map((r, i) => {
+        const x = rows.length === 1 ? 5 : (i / (rows.length - 1)) * 350 + 5;
+        const y = 170 - ((r.value - min) / (max - min || 1)) * 145;
+        return { x, y };
+      });
+
+      const pointsText = chartPoints.map(p => `${p.x},${p.y}`).join(' ');
+      document.getElementById('line').setAttribute('points', pointsText);
+      document.getElementById('area').setAttribute('d', `M5,180 L${pointsText} L355,180 Z`);
+    }
+
+    function updateUI() {
+      const current = rows[selectedIndex];
+      const point = chartPoints[selectedIndex];
+      if (!current || !point) return;
+
+      const isPositive = current.profit >= 0;
+
+      document.getElementById('accountValue').textContent = euro(current.value);
+      document.getElementById('profit').textContent = `${isPositive ? '↗' : '↘'} ${euro(current.profit)}`;
+      document.getElementById('profit').className = `stat-value ${isPositive ? 'positive' : 'negative'}`;
+      document.getElementById('returnRate').textContent = `${isPositive ? '↗' : '↘'} ${current.roi.toFixed(2)}%`;
+      document.getElementById('returnRate').className = `stat-value ${isPositive ? 'positive' : 'negative'}`;
+      document.getElementById('netDeposits').textContent = `${euro(current.invested)} Net deposits`;
+
+      document.getElementById('chartDate').textContent = dateLabel(current.date);
+      document.getElementById('chartMiniValue').textContent = euro(current.value);
+
+      document.getElementById('markerLine').setAttribute('x1', point.x);
+      document.getElementById('markerLine').setAttribute('x2', point.x);
+      document.getElementById('markerDot').setAttribute('cx', point.x);
+      document.getElementById('markerDot').setAttribute('cy', point.y);
+
+      [...tbody.querySelectorAll('tr')].forEach((tr, i) => {
+        tr.classList.toggle('active-row', i === selectedIndex);
+      });
+    }
+
+    function renderTable() {
+      tbody.innerHTML = rows.map((r, i) => `
+        <tr data-index="${i}">
+          <td style='width:32px;text-align:center;color:#8b96a6;font-size:15px;'>▾</td><td>${dateLabel(r.date)}</td>
+          <td>${euro(r.invested)}</td>
+          <td>${euro(r.value)}</td>
+          <td class="${r.monthlyReturn >= 0 ? 'positive' : 'negative'}">${(r.monthlyReturn * 100).toFixed(2)}%</td>
+          <td class="${r.profit >= 0 ? 'positive' : 'negative'}">${euro(r.profit)}</td>
+          <td class="${r.roi >= 0 ? 'positive' : 'negative'}">${r.roi.toFixed(2)}%</td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('tr').forEach(tr => {
+        tr.addEventListener('click', () => {
+          selectedIndex = Number(tr.dataset.index);
+          updateUI();
+        });
+      });
+    }
+
+    function selectByPointer(clientX) {
+      const rect = chartSvg.getBoundingClientRect();
+      const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const ratio = x / rect.width;
+      selectedIndex = Math.round(ratio * (rows.length - 1));
+      selectedIndex = Math.max(0, Math.min(selectedIndex, rows.length - 1));
+      updateUI();
+    }
+
+    chartCard.addEventListener('pointerdown', e => {
+      chartCard.setPointerCapture(e.pointerId);
+      selectByPointer(e.clientX);
+    });
+
+    chartCard.addEventListener('pointermove', e => {
+      if (e.buttons === 1 || e.pointerType === 'touch') {
+        selectByPointer(e.clientX);
+      }
+    });
+
+    function render() {
+      rows = calculateSeries();
+      selectedIndex = Math.min(selectedIndex, rows.length - 1);
+      drawChart();
+      renderTable();
+      updateUI();
+    }
+
+    [startAmount, annualReturn, monthlyDeposit, years].forEach(el => {
+      el.addEventListener('input', render);
+    });
+
+    render();
+  
+document.addEventListener('DOMContentLoaded',()=>{
+  const sel=document.getElementById('accountSelect');
+  if(sel){
+    sel.addEventListener('change',()=>{
+      const idx=sel.selectedIndex;
+      const accounts=['20876414','14590382','78241659','39187520'];
+      sel.options[0].text='Account: '+accounts[idx];
+    });
+  }
+});
+
+</script>
+</body>
+</html>
