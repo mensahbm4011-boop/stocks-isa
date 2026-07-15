@@ -874,6 +874,49 @@
       transform: scale(.94);
     }
 
+
+    .volatility-control {
+      grid-column: 1 / -1;
+      margin-top: 4px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .volatility-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .volatility-head label {
+      margin: 0;
+    }
+
+    #volatilityValue {
+      color: #eaf3fb;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    #volatilityInput {
+      width: 100%;
+      padding: 0;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+
+    .volatility-scale {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
 </style>
 </head>
 <body>
@@ -1006,6 +1049,18 @@
             <option>1</option><option>2</option><option>3</option><option>5</option><option selected>7</option><option>10</option>
           </select>
         </div>
+
+        <div class="volatility-control">
+          <div class="volatility-head">
+            <label for="volatilityInput">Market fluctuation</label>
+            <span id="volatilityValue">100%</span>
+          </div>
+          <input id="volatilityInput" type="range" min="0" max="300" value="100" step="5">
+          <div class="volatility-scale">
+            <span>Low</span>
+            <span>High</span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1021,6 +1076,8 @@
     const annualReturn = document.getElementById('annualReturn');
     const monthlyDeposit = document.getElementById('monthlyDeposit');
     const years = document.getElementById('years');
+    const volatilityInput = document.getElementById('volatilityInput');
+    const volatilityValue = document.getElementById('volatilityValue');
     const tbody = document.getElementById('portfolioTable');
     const chartCard = document.getElementById('chartCard');
     const chartSvg = document.getElementById('chartSvg');
@@ -1096,7 +1153,8 @@
           88: -0.018
         };
 
-        return wave1 + wave2 + wave3 + noise + (dips[month] || 0);
+        const fluctuationMultiplier = Number(volatilityInput.value || 100) / 100;
+        return (wave1 + wave2 + wave3 + noise + (dips[month] || 0)) * fluctuationMultiplier;
       }
 
       for (let m = 1; m <= totalMonths; m++) {
@@ -1268,10 +1326,14 @@
       updateUI();
     }
 
-    [startAmount, annualReturn, monthlyDeposit, years].forEach(el => {
-      el.addEventListener('input', render);
+    [startAmount, annualReturn, monthlyDeposit, years, volatilityInput].forEach(el => {
+      el.addEventListener('input', () => {
+        volatilityValue.textContent = `${volatilityInput.value}%`;
+        render();
+      });
     });
 
+    volatilityValue.textContent = `${volatilityInput.value}%`;
     render();
   
 
