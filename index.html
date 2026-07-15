@@ -1,3 +1,98 @@
+
+ma 6 jul om 12:19
+Ik ben aan het testen met een web app voor stocks en portfolio ik wil beginnen met design
+
+Kan jij dit voor mij desgnen moet op telefoon functioneren gwn een website voor nu en een tabel hij moet account value rate of return op basis van user generated input berekenen en zo een tabel terug geven waar in ik kan slepen en je realtime ziet de waarde van het account 
+
+vandaag 11:02
+haal ai rearch maar weg, dit is hoe de knop eruit moet zien boven portfolio  niet onder
+
+verander de fonts nog alleen zodat het er ongeveer zo uit zier
+
+zet net als in de bovenstaand image een grote plus naast account value en zit naast het tanwiel boven rechts een knop voor meldingen 
+
+plus is niet in het midden van de circkel, en notification knop moet dit zijn
+
+- plus knop kliener
+- grafiek met lijn aan de zijkant een stuk met  cijfers als bovenstaande foto (rechter kant aanpassen)
+- lichtleijke grid in de grafiek moet je bijna niet kunnen zien
+
+kan je melding icoon links naast de tandwiel aanpassen naar:
+
+vandaag 16:32
+Ja. Dat gebeurt in deze functie:
+
+function marketNoise(month) {
+  const wave1 = Math.sin(month * 0.85) * 0.012;
+  const wave2 = Math.sin(month * 1.95 + 1.6) * 0.008;
+  const wave3 = Math.sin(month * 0.31 + 2.2) * 0.006;
+
+  const pseudoRandom = Math.sin(month * 12.9898) * 43758.5453;
+  const noise =
+    (pseudoRandom - Math.floor(pseudoRandom) - 0.5) * 0.014;
+
+  const dips = {
+    7: -0.018,
+    14: -0.024,
+    23: -0.020
+  };
+
+  return wave1 + wave2 + wave3 + noise + (dips[month] || 0);
+}
+De onderdelen doen dit:
+
+wave1, wave2, wave3: maken de lijn golvend.
+
+noise: maakt de beweging minder voorspelbaar en minder lineair.
+
+dips: voegt op bepaalde maanden een duidelijke terugval toe.
+
+Deze regel voorkomt negatieve maandrendementen:
+
+const monthlyReturn = Math.max(
+  0.0025,
+  baseMonthlyRate + marketNoise(m)
+);
+Daardoor blijft iedere maand minimaal +0,25%, ook wanneer de grafiek sterke schommelingen toont.
+
+
+ik wil dat als user input helemaal beneden zodat ik het zelf kan aanpassen
+
+Ik heb onderaan bij Simulation een extra user input toegevoegd:
+
+Market fluctuation
+
+slider van 0% tot 300%
+
+standaard op 100%
+
+hoe hoger je hem zet, hoe meer de grafiek schommelt
+
+de maand blijft nog steeds minimaal positief door de bestaande ondergrens
+
+stocks_isa_premium_v22_adjustable_fluctuation.html 
+
+
+
+zet wat meer spatie bij de cijfers bij account value het is nu tegen elkaar aan
+
+Aangepast. De cijfers bij Account Value hebben nu wat meer ruimte, zodat het minder op elkaar gedrukt staat.
+
+stocks_isa_premium_v23_account_value_spacing.html
+
+
+
+stocks_isa_premium_v23_account_value_spacing.html
+
+
+
+
+
+stocks_isa_premium_v23_account_value_spacing.html
+
+
+
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -681,14 +776,14 @@
     .value-major {
       font-size: 1em;
       font-weight: 300;
-      letter-spacing: -.055em;
+      letter-spacing: -.02em;
     }
 
     .value-minor {
-      margin-left: 1px;
+      margin-left: 3px;
       font-size: .56em;
       font-weight: 400;
-      letter-spacing: -.035em;
+      letter-spacing: -.01em;
     }
 
 
