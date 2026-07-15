@@ -706,15 +706,15 @@
 
 
     .chart-card {
-      padding-right: 34px;
+      padding-right: 6px;
     }
 
     .chart-axis-right {
       position: absolute;
-      right: 6px;
+      right: 1px;
       top: 74px;
       bottom: 60px;
-      width: 26px;
+      width: 14px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -723,8 +723,8 @@
     }
 
     .chart-axis-right span {
-      color: rgba(154, 167, 180, .58);
-      font-size: 11px;
+      color: rgba(154, 167, 180, .48);
+      font-size: 7px;
       line-height: 1;
       text-align: left;
       letter-spacing: -.01em;
@@ -737,16 +737,16 @@
 
     @media (max-width: 430px) {
       .chart-card {
-        padding-right: 30px;
+        padding-right: 4px;
       }
 
       .chart-axis-right {
-        right: 4px;
-        width: 24px;
+        right: 0;
+        width: 13px;
       }
 
       .chart-axis-right span {
-        font-size: 10px;
+        font-size: 7px;
       }
     }
 
@@ -936,7 +936,7 @@
         </defs>
         <g id="gridGroup"></g>
         <path id="area" fill="url(#fill)"></path>
-        <polyline id="line" fill="none" stroke="#2aa8ff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        <polyline id="line" fill="none" stroke="#2aa8ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
         <line id="markerLine" x1="0" y1="20" x2="0" y2="176" stroke="rgba(255,255,255,.32)" stroke-width="1.4"></line>
         <circle id="markerDot" cx="0" cy="0" r="5.5" fill="#ffffff" stroke="#2aa8ff" stroke-width="3.5"></circle>
       </svg>
@@ -1133,7 +1133,7 @@
     function drawChart() {
       const plot = {
         left: 4,
-        right: 318,
+        right: 348,
         top: 20,
         bottom: 176
       };
@@ -1241,7 +1241,7 @@
       const rect = chartSvg.getBoundingClientRect();
       const svgX = ((clientX - rect.left) / rect.width) * 360;
       const plotLeft = 4;
-      const plotRight = 318;
+      const plotRight = 348;
       const clamped = Math.max(plotLeft, Math.min(svgX, plotRight));
       const ratio = (clamped - plotLeft) / (plotRight - plotLeft || 1);
       selectedIndex = Math.round(ratio * (rows.length - 1));
