@@ -1,1367 +1,623 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Stock Portfolio Demo</title>
+  <meta name="theme-color" content="#05080c" />
+  <title>Investment Account</title>
   <style>
     :root {
-      --bg: #010203;
-      --card: #080b10;
-      --line: #151b22;
-      --text: #f5f7fb;
-      --muted: #8b96a6;
-      --blue: #2aa8ff;
-      --green: #6dff8c;
-      --red: #ff5d6c;
+      --bg:#05080c;
+      --surface:#0a0f15;
+      --surface-2:#0d141d;
+      --surface-3:#101923;
+      --line:rgba(255,255,255,.075);
+      --line-strong:rgba(255,255,255,.12);
+      --text:#f5f7fa;
+      --muted:#84909d;
+      --muted-2:#66717e;
+      --blue:#28a8ef;
+      --blue-soft:rgba(40,168,239,.11);
+      --green:#68dfa0;
+      --red:#ff6f7c;
+      --amber:#e9b95f;
+      --radius:18px;
+      --pad:18px;
     }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top right, #07131c 0%, #020406 38%, var(--bg) 75%);
-      color: var(--text);
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 85% -10%, rgba(28,97,137,.22), transparent 31%),
+        linear-gradient(180deg,#05080c 0%,#030508 100%);
+      font-family:"Avenir Next","Helvetica Neue",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      -webkit-font-smoothing:antialiased;
     }
 
-    .app {
-      --page-pad: 18px;
-      max-width: 430px;
-      min-height: 100vh;
-      margin: 0 auto;
-      padding: 22px var(--page-pad) 90px;
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+
+    .app{
+      width:100%;
+      max-width:460px;
+      min-height:100vh;
+      margin:0 auto;
+      padding:18px var(--pad) 98px;
     }
 
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 26px;
-    }
-
-    .brand {
-      font-weight: 800;
-      letter-spacing: .5px;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .logo {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--blue), #005aff);
-      color:#fff;
+    .topbar{
       display:flex;
       align-items:center;
-      justify-content:center;
-      font-size:12px;
-      font-weight:800;
-      letter-spacing:.3px;
-      flex-shrink:0;
-    }
-
-    .icons { color: var(--muted); font-size: 22px; }
-
-    .label {
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing: .9px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .value {
-      font-size: 56px;
-      line-height: 1;
-      margin: 10px 0 20px;
-      font-weight: 500;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin-bottom: 16px;
-    }
-
-    .stat-value {
-      color: var(--green);
-      font-size: 22px;
-      margin-top: 4px;
-      font-weight: 700;
-    }
-
-    .pill {
-      display: inline-flex;
-      gap: 10px;
-      align-items: center;
-      background: linear-gradient(180deg, #0d1118, #090c11);
-      color: #dfe7ef;
-      padding: 11px 14px;
-      border-radius: 14px;
-      font-weight: 800;
-      letter-spacing: 1.1px;
-      text-transform: uppercase;
-      font-family: "Arial Narrow", Inter, sans-serif;
-      font-size: 12px;
-      margin-bottom: 20px;
-      border: 1px solid #181f28;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      background: #95a0ad;
-      border-radius: 50%;
-    }
-
-        .chart-card {
-      position: relative;
-      background: linear-gradient(180deg, rgba(8,25,36,.96), rgba(3,6,9,.98));
-      border: 1px solid rgba(42,168,255,.14);
-      border-radius: 22px;
-      padding: 16px 10px 10px;
-      margin-bottom: 18px;
-      overflow: hidden;
-      touch-action: none;
-      user-select: none;
-    }
-
-    .chart-meta {
-      position: absolute;
-      top: 14px;
-      left: 18px;
-      z-index: 3;
-      background: rgba(5,8,13,.68);
-      border: 1px solid rgba(255,255,255,.08);
-      backdrop-filter: blur(10px);
-      border-radius: 14px;
-      padding: 8px 10px;
-      pointer-events: none;
-    }
-
-    .chart-date {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-    }
-
-    .chart-mini-value {
-      margin-top: 2px;
-      font-size: 15px;
-      font-weight: 800;
-    }
-
-    svg { width: 100%; height: 225px; display: block; }
-
-    .tabs {
-      display: flex;
-      justify-content: space-between;
-      color: var(--muted);
-      font-weight: 700;
-      margin-top: 4px;
-      padding: 0 10px;
-    }
-
-    .tabs span {
-      padding: 10px 12px;
-      border-radius: 18px;
-    }
-
-    .tabs .active {
-      color: white;
-      background: #1b2029;
-    }
-
-    .panel {
-      background: linear-gradient(180deg, rgba(10,13,18,.98), rgba(5,7,10,.98));
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      padding: 16px;
-      margin-top: 14px;
-    }
-
-    .panel-title {
-      font-size: 18px;
-      font-weight: 800;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .input-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    label {
-      display: block;
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 6px;
-      font-weight: 700;
-    }
-
-    input, select {
-      width: 100%;
-      border: 1px solid #273442;
-      background: #090f16;
-      color: white;
-      border-radius: 12px;
-      padding: 12px;
-      font-size: 15px;
-      outline: none;
-    }
-
-    .table-wrap {
-      overflow-x: auto;
-      margin-top: 10px;
-      border-radius: 16px;
-      border: 1px solid #202c38;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 100%;
-      font-size: 12px;
-      background: #0a1017;
-    }
-
-    thead th {
-      background: #111820;
-    }
-
-    th, td {
-      padding: 11px 6px;
-      border-bottom: 1px solid #22303c;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    th:first-child, td:first-child { text-align:center; width:28px; } th:nth-child(2), td:nth-child(2){text-align:left;}
-
-    th {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    tbody tr.active-row {
-      background: linear-gradient(90deg, rgba(42,168,255,.22), rgba(42,168,255,.05));
-      outline: 1px solid rgba(42,168,255,.55);
-      outline-offset: -1px;
-    }
-
-    .positive { color: var(--green); }
-    .negative { color: var(--red); }
-
-    .bottom-nav {
-      position: fixed;
-      left: 50%;
-      bottom: 0;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 430px;
-      background: rgba(9,15,22,.96);
-      border-top: 1px solid #1f2d39;
-      display: flex;
-      justify-content: space-around;
-      padding: 13px 0 20px;
-      color: var(--muted);
-      font-size: 24px;
-    }
-
-    .bottom-nav .active { color: var(--blue); }
-
-    @media (max-width: 360px) {
-      .value { font-size: 46px; }
-      .hero-tag { font-size: 23px; }
-    }
-
-    @media (max-width: 430px) {
-      .app { --page-pad: 14px; padding-left: var(--page-pad); padding-right: var(--page-pad); }
-      .value { font-size: 48px; }
-      .chart-card { padding-left: 6px; padding-right: 6px; }
-      th, td { padding: 10px 5px; font-size: 11px; }
-      th:nth-child(4), td:nth-child(4) { display: none; }
-      .table-wrap { overflow-x: hidden; }
-      .panel { padding: 13px; }
-      .brand { gap: 6px; }
-      .logo { width: 28px; height: 28px; }
-    }
-
-  
-    .portfolio-head{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
-    .portfolio-actions{display:flex!important;gap:8px;width:100%;visibility:visible!important;opacity:1!important}
-    .action-btn{display:inline-flex;align-items:center;justify-content:center;flex:1;min-height:42px;border-radius:13px;border:1px solid #1f2a34;background:linear-gradient(180deg,#111820,#0a0f15);color:#f7fbff;font-weight:800;font-size:12px;letter-spacing:.3px;cursor:pointer}
-    .action-btn.primary{background:linear-gradient(180deg,#269ef3,#147bd0);border-color:#36a9f6;box-shadow:0 10px 24px rgba(42,168,255,.18)}
-    .action-btn:active{transform:scale(.98)}
-    .account-subtitle{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:2px}
-    .brand-account{display:flex;flex-direction:column;min-width:0}
-    .portfolio-card-list{display:none}
-    .portfolio-card{border:1px solid #171f28;border-radius:14px;background:linear-gradient(180deg,#090d12,#06090d);padding:12px;margin-bottom:9px}
-    .portfolio-card.active-row{border-color:rgba(42,168,255,.5);box-shadow:0 0 0 1px rgba(42,168,255,.12)}
-    .portfolio-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-    .portfolio-card-date{font-weight:800;font-size:13px}
-    .portfolio-card-value{font-size:19px;font-weight:800}
-    .portfolio-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-    .portfolio-card-grid .k{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
-    .portfolio-card-grid .v{display:block;font-size:12px;font-weight:800}
-    .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;background:#0c1218;color:#fff;border:1px solid #1e2a35;padding:11px 14px;border-radius:12px;font-size:12px;font-weight:700;transition:.2s ease;z-index:20}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    @media(max-width:430px){.portfolio-card-list{display:block}.table-wrap{display:none}.value{letter-spacing:-1.5px}.action-btn{font-size:11px}}
-
-
-    .cash-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      margin: 0 0 14px;
-      padding: 14px 14px 14px 16px;
-      border-radius: 20px;
-      background: linear-gradient(145deg, #0c2636, #081b28);
-      border: 1px solid rgba(62, 151, 205, .08);
-      box-shadow:
-        0 12px 30px rgba(0, 0, 0, .28),
-        inset 0 1px 0 rgba(255, 255, 255, .025);
-    }
-
-    .cash-details {
-      min-width: 0;
-    }
-
-    .cash-label {
-      margin-bottom: 3px;
-      color: #91a0ae;
-      font-size: 10px;
-      line-height: 1;
-      font-weight: 800;
-      letter-spacing: .8px;
-      text-transform: uppercase;
-    }
-
-    .cash-value {
-      color: #f3f7fb;
-      font-size: 15px;
-      line-height: 1.15;
-      font-weight: 800;
-      letter-spacing: .2px;
-    }
-
-    .cash-deposit-btn {
-      min-width: 82px;
-      min-height: 38px;
-      padding: 0 17px;
-      border: 1px solid rgba(75, 205, 255, .35);
-      border-radius: 999px;
-      background: linear-gradient(180deg, #19b6ee, #079ad5);
-      color: #fff;
-      font: inherit;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: .1px;
-      cursor: pointer;
-      box-shadow:
-        0 8px 18px rgba(0, 166, 224, .22),
-        inset 0 1px 0 rgba(255, 255, 255, .22);
-      transition: transform .15s ease, filter .15s ease;
-    }
-
-    .cash-deposit-btn:active {
-      transform: scale(.97);
-      filter: brightness(.94);
-    }
-
-    @media (max-width: 430px) {
-      .cash-card {
-        margin-bottom: 12px;
-        padding: 13px 13px 13px 15px;
-      }
-
-      .cash-deposit-btn {
-        min-width: 80px;
-        min-height: 38px;
-      }
-    }
-
-
-    body {
-      font-family: "Avenir Next", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-weight: 400;
-      letter-spacing: -.01em;
-    }
-
-    .brand,
-    .panel-title,
-    .portfolio-card-date,
-    .portfolio-card-value,
-    .cash-value {
-      font-family: "Avenir Next", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-weight: 600;
-      letter-spacing: -.015em;
-    }
-
-    .label,
-    .account-subtitle,
-    .cash-label,
-    .portfolio-card-grid .k,
-    th {
-      font-family: "Avenir Next", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-weight: 600;
-      letter-spacing: .055em;
-    }
-
-    .value {
-      font-family: "Helvetica Neue", "Avenir Next", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-weight: 300;
-      letter-spacing: -.045em;
-    }
-
-    .stat-value,
-    .chart-mini-value {
-      font-family: "Avenir Next", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-weight: 500;
-      letter-spacing: -.02em;
-    }
-
-    .pill,
-    .cash-deposit-btn,
-    .action-btn,
-    input,
-    select,
-    td {
-      font-family: "Avenir Next", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    .pill {
-      font-weight: 600;
-      letter-spacing: .075em;
-    }
-
-    .cash-deposit-btn {
-      font-weight: 500;
-      letter-spacing: 0;
-    }
-
-    .tabs {
-      font-family: "Avenir Next", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-weight: 600;
-      letter-spacing: -.01em;
-    }
-
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      width: 38px;
-      height: 38px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      border: 1px solid rgba(255, 255, 255, .06);
-      border-radius: 50%;
-      background: rgba(7, 10, 14, .82);
-      color: #edf3f8;
-      font: inherit;
-      font-size: 20px;
-      line-height: 1;
-      cursor: pointer;
-      transition: transform .15s ease, background .15s ease, border-color .15s ease;
-    }
-
-    .icon-btn:active {
-      transform: scale(.95);
-      background: #101720;
-      border-color: rgba(42, 168, 255, .25);
-    }
-
-    .bell-btn {
-      position: relative;
-      font-size: 0;
-    }
-
-    .bell-btn::before {
-      content: "";
-      width: 13px;
-      height: 15px;
-      border: 1.8px solid currentColor;
-      border-bottom: 0;
-      border-radius: 9px 9px 3px 3px;
-      transform: translateY(-1px);
-    }
-
-    .bell-btn::after {
-      content: "";
-      position: absolute;
-      width: 16px;
-      height: 5px;
-      border-bottom: 1.8px solid currentColor;
-      border-radius: 0 0 9px 9px;
-      bottom: 8px;
-    }
-
-    .account-value-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      margin-bottom: 4px;
-    }
-
-    .account-value-copy {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .account-plus-btn {
-      width: 58px;
-      height: 58px;
-      flex: 0 0 58px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      border: 1px solid rgba(78, 206, 255, .34);
-      border-radius: 50%;
-      background: linear-gradient(180deg, #18b7ef, #0798d4);
-      color: #fff;
-      font-family: "Helvetica Neue", "Avenir Next", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 48px;
-      font-weight: 200;
-      line-height: 1;
-      cursor: pointer;
-      box-shadow:
-        0 14px 30px rgba(0, 170, 230, .22),
-        inset 0 1px 0 rgba(255, 255, 255, .2);
-      transition: transform .15s ease, filter .15s ease;
-    }
-
-    .account-plus-btn:active {
-      transform: scale(.96);
-      filter: brightness(.94);
-    }
-
-    @media (max-width: 430px) {
-      .account-value-row {
-        gap: 14px;
-      }
-
-      .account-plus-btn {
-        width: 56px;
-        height: 56px;
-        flex-basis: 56px;
-        font-size: 40px;
-      }
-
-      .top-actions {
-        gap: 6px;
-      }
-
-      .icon-btn {
-        width: 36px;
-        height: 36px;
-      }
-    }
-
-
-    .account-plus-btn {
-      position: relative;
-      font-size: 0;
-    }
-
-    .account-plus-btn::before,
-    .account-plus-btn::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      background: #ffffff;
-      border-radius: 999px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    .account-plus-btn::before {
-      width: 29px;
-      height: 2px;
-    }
-
-    .account-plus-btn::after {
-      width: 2px;
-      height: 29px;
-    }
-
-    .bell-btn {
-      background: transparent;
-      border-color: transparent;
-      width: 36px;
-      height: 36px;
-    }
-
-    .bell-btn::before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 7px;
-      width: 13px;
-      height: 16px;
-      transform: translateX(-50%);
-      border: 1.8px solid #aeb8c2;
-      border-bottom: none;
-      border-radius: 9px 9px 4px 4px;
-      box-sizing: border-box;
-    }
-
-    .bell-btn::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 22px;
-      width: 19px;
-      height: 8px;
-      transform: translateX(-50%);
-      border-top: 1.8px solid #aeb8c2;
-      border-radius: 50%;
-      box-shadow: 0 3px 0 -1px #aeb8c2;
-    }
-
-    .bell-btn:hover,
-    .bell-btn:focus-visible {
-      background: rgba(255, 255, 255, .035);
-      border-color: rgba(255, 255, 255, .06);
-    }
-
-
-
-
-    .account-plus-btn::before {
-      width: 18px;
-      height: 2px;
-    }
-
-    .account-plus-btn::after {
-      width: 2px;
-      height: 18px;
-    }
-
-
-    .account-value-formatted {
-      display: flex;
-      align-items: baseline;
-      white-space: nowrap;
-    }
-
-    .currency-symbol {
-      margin-right: 3px;
-      font-size: .48em;
-      font-weight: 400;
-      letter-spacing: -.02em;
-    }
-
-    .value-major {
-      font-size: 1em;
-      font-weight: 300;
-      letter-spacing: -.02em;
-    }
-
-    .value-minor {
-      margin-left: 3px;
-      font-size: .56em;
-      font-weight: 400;
-      letter-spacing: -.01em;
-    }
-
-
-    .account-value-row {
-      align-items: center;
-    }
-
-    .account-plus-btn {
-      transform: none;
-    }
-
-    .account-plus-btn:active {
-      transform: scale(.96);
-    }
-
-
-    .chart-card {
-      padding-right: 6px;
-    }
-
-    .chart-axis-right {
-      position: absolute;
-      right: 1px;
-      top: 74px;
-      bottom: 60px;
-      width: 14px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    .chart-axis-right span {
-      color: rgba(154, 167, 180, .48);
-      font-size: 7px;
-      line-height: 1;
-      text-align: left;
-      letter-spacing: -.01em;
-    }
-
-    #gridGroup line {
-      stroke: rgba(255, 255, 255, .02);
-      stroke-width: 1;
-    }
-
-    @media (max-width: 430px) {
-      .chart-card {
-        padding-right: 4px;
-      }
-
-      .chart-axis-right {
-        right: 0;
-        width: 13px;
-      }
-
-      .chart-axis-right span {
-        font-size: 7px;
-      }
-    }
-
-
-    .full-bleed-section {
-      width: calc(100% + (var(--page-pad) * 2));
-      margin-left: calc(var(--page-pad) * -1);
-      margin-right: calc(var(--page-pad) * -1);
-      border-radius: 0 !important;
-    }
-
-    .chart-card.full-bleed-section,
-    .cash-card.full-bleed-section,
-    .portfolio-panel.full-bleed-section {
-      border-left: 0;
-      border-right: 0;
-    }
-
-    .chart-card.full-bleed-section {
-      padding-left: 14px;
-      padding-right: 30px;
-    }
-
-    .cash-card.full-bleed-section {
-      padding-left: 18px;
-      padding-right: 18px;
-    }
-
-    .portfolio-panel.full-bleed-section {
-      padding-left: 18px;
-      padding-right: 18px;
-    }
-
-    @media (max-width: 430px) {
-      .chart-card.full-bleed-section {
-        padding-left: 12px;
-        padding-right: 28px;
-      }
-
-      .cash-card.full-bleed-section,
-      .portfolio-panel.full-bleed-section {
-        padding-left: 14px;
-        padding-right: 14px;
-      }
-    }
-
-
-    .bell-btn {
-      width: 38px;
-      height: 38px;
-      padding: 5px;
-      background: transparent;
-      border-color: transparent;
-      overflow: visible;
-    }
-
-    .bell-btn::before,
-    .bell-btn::after {
-      display: none !important;
-      content: none !important;
-    }
-
-    .notification-bell-icon {
-      width: 28px;
-      height: 28px;
-      display: block;
-      overflow: visible;
-    }
-
-    .notification-bell-icon .bell-body,
-    .notification-bell-icon .bell-clapper {
-      fill: #aeb8c2;
-    }
-
-    .notification-bell-icon .bell-ring {
-      fill: none;
-      stroke: #aeb8c2;
-      stroke-width: 5.5;
-      stroke-linecap: square;
-    }
-
-    .bell-btn:active .notification-bell-icon {
-      transform: scale(.94);
-    }
-
-    @media (max-width: 430px) {
-      .bell-btn {
-        width: 36px;
-        height: 36px;
-      }
-
-      .notification-bell-icon {
-        width: 26px;
-        height: 26px;
-      }
-    }
-
-
-    .bell-btn {
-      width: 34px;
-      height: 34px;
-      padding: 7px;
-      background: transparent;
-      border-color: transparent;
-    }
-
-    .bell-btn::before,
-    .bell-btn::after {
-      display: none !important;
-      content: none !important;
-    }
-
-    .simple-bell-icon {
-      width: 19px;
-      height: 19px;
-      display: block;
-      fill: none;
-      stroke: #aeb8c2;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .bell-btn:active .simple-bell-icon {
-      transform: scale(.94);
-    }
-
-
-    .volatility-control {
-      grid-column: 1 / -1;
-      margin-top: 4px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255,255,255,.06);
-    }
-
-    .volatility-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    .volatility-head label {
-      margin: 0;
-    }
-
-    #volatilityValue {
-      color: #eaf3fb;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    #volatilityInput {
-      width: 100%;
-      padding: 0;
-      accent-color: var(--blue);
-      cursor: pointer;
-    }
-
-    .volatility-scale {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-</style>
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:27px;
+    }
+
+    .account-switcher{display:flex;align-items:center;gap:10px;min-width:0}
+    .avatar{
+      width:34px;height:34px;border-radius:50%;
+      display:grid;place-items:center;
+      background:linear-gradient(145deg,#1d91cf,#136399);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+      font-size:11px;font-weight:700;letter-spacing:.03em;
+      flex:0 0 auto;
+    }
+    .account-copy{min-width:0}
+    .eyebrow{
+      color:var(--muted);
+      font-size:9px;
+      font-weight:700;
+      letter-spacing:.11em;
+      text-transform:uppercase;
+    }
+    #accountSelect{
+      margin:2px 0 0 -3px;
+      max-width:188px;
+      border:0;background:transparent;color:var(--text);
+      font-weight:600;font-size:13px;outline:0;
+    }
+
+    .top-actions{display:flex;gap:7px}
+    .icon-btn{
+      width:36px;height:36px;border-radius:50%;
+      border:1px solid transparent;background:transparent;color:#aab4be;
+      display:grid;place-items:center;padding:0;
+      transition:.15s ease;
+    }
+    .icon-btn:hover{background:rgba(255,255,255,.035);border-color:var(--line)}
+    .icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+    .hero{margin-bottom:19px}
+    .hero-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .hero-value{
+      margin:7px 0 0;
+      font-size:47px;
+      line-height:1;
+      letter-spacing:-.055em;
+      font-weight:300;
+      white-space:nowrap;
+    }
+    .deposit-round{
+      width:52px;height:52px;border:1px solid rgba(54,181,244,.33);border-radius:50%;
+      background:linear-gradient(180deg,#21adee,#1688c5);color:white;
+      display:grid;place-items:center;
+      box-shadow:0 10px 25px rgba(15,146,207,.19), inset 0 1px 0 rgba(255,255,255,.2);
+    }
+    .deposit-round svg{width:20px;height:20px;stroke:currentColor;stroke-width:1.7}
+
+    .hero-stats{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+      margin-top:19px;
+    }
+    .hero-stat{min-width:0}
+    .hero-stat .k{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:650}
+    .hero-stat .v{display:block;margin-top:5px;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .positive{color:var(--green)!important}.negative{color:var(--red)!important}
+
+    .chart-shell{
+      position:relative;
+      width:calc(100% + var(--pad)*2);
+      margin-left:calc(var(--pad)*-1);
+      padding:17px 27px 14px 12px;
+      background:linear-gradient(180deg,rgba(10,25,36,.76),rgba(5,9,13,.15));
+      border-top:1px solid rgba(44,151,212,.07);
+      border-bottom:1px solid rgba(44,151,212,.07);
+      overflow:hidden;
+      touch-action:none;
+      user-select:none;
+    }
+    .chart-meta{
+      position:absolute;left:19px;top:18px;z-index:2;
+      padding:7px 9px;border-radius:11px;
+      background:rgba(4,8,12,.58);border:1px solid rgba(255,255,255,.06);
+      backdrop-filter:blur(8px);pointer-events:none;
+    }
+    .chart-meta-date{font-size:9px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.06em}
+    .chart-meta-value{font-size:13px;font-weight:600;margin-top:2px}
+    #chartSvg{display:block;width:100%;height:225px;overflow:visible}
+    #gridGroup line{stroke:rgba(255,255,255,.035);stroke-width:1}
+    .axis-right{
+      position:absolute;right:3px;top:57px;bottom:58px;
+      width:25px;display:flex;flex-direction:column;justify-content:space-between;
+      color:rgba(161,173,184,.5);font-size:7px;text-align:left;pointer-events:none;
+    }
+    .range-tabs{display:flex;justify-content:space-between;gap:4px;padding:0 3px;margin-top:3px}
+    .range-btn{
+      min-width:52px;padding:7px 10px;border:0;border-radius:999px;
+      background:transparent;color:var(--muted);font-size:10px;font-weight:700;
+    }
+    .range-btn.active{background:#18212b;color:#fff}
+
+    .section{margin-top:21px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+    .section-title{font-size:16px;font-weight:650;letter-spacing:-.015em}
+    .section-link{border:0;background:transparent;color:#8ecdf1;padding:4px 0;font-size:11px;font-weight:600}
+
+    .card{
+      background:linear-gradient(180deg,rgba(12,18,25,.96),rgba(7,11,16,.96));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+    }
+
+    .cash-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 16px}
+    .cash-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:650}
+    .cash-value{font-size:18px;font-weight:600;margin-top:3px}
+    .primary-btn{
+      min-height:38px;padding:0 17px;border-radius:999px;border:1px solid rgba(55,181,244,.28);
+      background:linear-gradient(180deg,#20adef,#1688c7);color:white;font-size:12px;font-weight:600;
+      box-shadow:0 8px 20px rgba(18,137,192,.14);
+    }
+
+    .performance-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+    .performance-card{padding:14px}
+    .performance-card .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:650}
+    .performance-card .v{font-size:17px;font-weight:600;margin-top:6px}
+    .performance-card .sub{font-size:9px;color:var(--muted-2);margin-top:3px}
+
+    .projection-callout{
+      padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+      background:linear-gradient(135deg,rgba(15,48,69,.7),rgba(8,19,28,.85));
+      border-color:rgba(54,169,231,.12);
+    }
+    .projection-callout strong{display:block;font-size:13px;font-weight:650}
+    .projection-callout p{margin:4px 0 0;color:var(--muted);font-size:10px;line-height:1.45}
+    .ghost-btn{border:1px solid var(--line-strong);background:#101821;color:#dce5ec;border-radius:999px;padding:9px 12px;font-size:10px;font-weight:650;white-space:nowrap}
+
+    .history-list{overflow:hidden}
+    .history-row{display:grid;grid-template-columns:1.05fr .85fr .75fr;align-items:center;gap:10px;padding:13px 14px;border-bottom:1px solid var(--line)}
+    .history-row:last-child{border-bottom:0}
+    .history-date{font-size:11px;font-weight:600}
+    .history-date span{display:block;color:var(--muted);font-size:9px;font-weight:500;margin-top:2px}
+    .history-value{text-align:right;font-size:11px;font-weight:600}
+    .history-return{text-align:right;font-size:11px;font-weight:650}
+
+    .activity-list{overflow:hidden}
+    .activity-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--line)}
+    .activity-item:last-child{border-bottom:0}
+    .activity-icon{width:34px;height:34px;border-radius:50%;background:#101a24;display:grid;place-items:center;color:#9bcbea;flex:0 0 auto}
+    .activity-icon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+    .activity-copy{min-width:0;flex:1}
+    .activity-copy strong{display:block;font-size:11px;font-weight:600}
+    .activity-copy span{display:block;margin-top:2px;color:var(--muted);font-size:9px}
+    .activity-amount{font-size:11px;font-weight:600;text-align:right}
+
+    .account-card{padding:15px 16px;display:grid;gap:14px}
+    .account-line{display:flex;justify-content:space-between;gap:12px;font-size:11px}
+    .account-line span:first-child{color:var(--muted)}
+
+    .bottom-nav{
+      position:fixed;left:50%;bottom:0;transform:translateX(-50%);
+      width:min(100%,460px);height:76px;padding:8px 10px 12px;
+      display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+      background:rgba(6,10,14,.94);border-top:1px solid var(--line);backdrop-filter:blur(16px);z-index:20;
+    }
+    .nav-btn{border:0;background:transparent;color:#778390;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9px;font-weight:600}
+    .nav-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .nav-btn.active{color:var(--blue);background:rgba(40,168,239,.055)}
+
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.67);backdrop-filter:blur(7px);z-index:40;
+      display:none;align-items:flex-end;justify-content:center;
+    }
+    .modal-backdrop.open{display:flex}
+    .sheet{
+      width:min(100%,460px);max-height:88vh;overflow:auto;
+      background:#0a0f15;border:1px solid var(--line-strong);border-bottom:0;border-radius:24px 24px 0 0;
+      padding:20px 18px 28px;box-shadow:0 -20px 80px rgba(0,0,0,.45);
+    }
+    .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}
+    .sheet-head h2{font-size:18px;margin:0;font-weight:650}
+    .sheet-head p{margin:5px 0 0;color:var(--muted);font-size:10px;line-height:1.5}
+    .close-btn{width:32px;height:32px;border:1px solid var(--line);border-radius:50%;background:#0f151c;color:#dbe2e8;font-size:18px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .field.full{grid-column:1/-1}
+    label{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.07em;font-weight:650;margin-bottom:6px}
+    input,select{
+      width:100%;min-height:43px;border:1px solid var(--line-strong);border-radius:12px;background:#070b10;color:var(--text);padding:10px 11px;outline:0;font-size:13px;
+    }
+    input[type=range]{padding:0;border:0;min-height:auto;accent-color:var(--blue)}
+    .range-labels{display:flex;justify-content:space-between;color:var(--muted-2);font-size:8px;text-transform:uppercase;margin-top:5px}
+    .projection-result{margin-top:16px;padding:16px;border-radius:16px;background:linear-gradient(135deg,rgba(35,155,220,.12),rgba(17,32,45,.35));border:1px solid rgba(45,164,225,.13)}
+    .projection-result .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+    .projection-result .v{font-size:28px;font-weight:400;letter-spacing:-.035em;margin-top:5px}
+    .projection-result .sub{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.45}
+
+    .toast{
+      position:fixed;left:50%;bottom:89px;transform:translate(-50%,16px);opacity:0;pointer-events:none;
+      z-index:60;background:#111922;border:1px solid var(--line-strong);color:#f3f6f8;padding:10px 13px;border-radius:12px;font-size:10px;font-weight:600;transition:.2s ease;
+    }
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+
+    @media(max-width:370px){
+      :root{--pad:14px}
+      .hero-value{font-size:42px}
+      .hero-stats{gap:6px}
+      .hero-stat .v{font-size:12px}
+      .range-btn{min-width:45px;padding-left:8px;padding-right:8px}
+    }
+  </style>
 </head>
 <body>
   <main class="app">
-    <section class="topbar">
-      <div class="brand"><div class="logo">BM</div><div class="brand-account"><div class="account-subtitle">Investment account</div>
-<select id="accountSelect" style="background:transparent;border:none;color:white;font-weight:800;font-size:13px;outline:none;cursor:pointer;max-width:190px;">
-  <option selected>Account: 20876414</option>
-  <option>Account: 14590382</option>
-  <option>Account: 78241659</option>
-  <option>Account: 39187520</option>
-</select></div>
-</div>
+    <header class="topbar" id="home">
+      <div class="account-switcher">
+        <div class="avatar">BM</div>
+        <div class="account-copy">
+          <div class="eyebrow">Investment account</div>
+          <select id="accountSelect" aria-label="Investment account">
+            <option selected>Account · 20876414</option>
+            <option>Account · 14590382</option>
+            <option>Account · 78241659</option>
+            <option>Account · 39187520</option>
+          </select>
+        </div>
+      </div>
       <div class="top-actions">
-        <button type="button" class="icon-btn bell-btn" id="notificationBtn" aria-label="Notifications">
-          <svg class="simple-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
-            <path d="M10 21h4"/>
-          </svg>
+        <button class="icon-btn" id="notificationBtn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
         </button>
-        <button type="button" class="icon-btn" id="settingsBtn" aria-label="Settings">⚙︎</button>
+        <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.09A1.7 1.7 0 0 0 8 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 3.6 15a1.7 1.7 0 0 0-.6-1A1.7 1.7 0 0 0 1.9 13.6H2V9.6h-.09A1.7 1.7 0 0 0 3.6 8a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8 3.6a1.7 1.7 0 0 0 1-.6A1.7 1.7 0 0 0 9.4 1.9V2h4v-.09A1.7 1.7 0 0 0 15 3.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 8c.23.37.38.76.6 1 .3.35.65.5 1.1.6H21v4h.09c-.45.1-.8.25-1.1.6-.22.24-.37.63-.59 1Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-head">
+        <div>
+          <div class="eyebrow">Portfolio value</div>
+          <div class="hero-value" id="accountValue">€0.00</div>
+        </div>
+        <button class="deposit-round" id="accountPlusBtn" aria-label="Deposit funds">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="k">Total profit</span><span class="v positive" id="profit">€0</span></div>
+        <div class="hero-stat"><span class="k">Return</span><span class="v positive" id="returnRate">0%</span></div>
+        <div class="hero-stat"><span class="k">Net deposits</span><span class="v" id="netDeposits">€0</span></div>
       </div>
     </section>
 
-    <section>
-      <div class="account-value-row">
-        <div class="account-value-copy">
-          <div class="label">Account Value</div>
-          <div class="value account-value-formatted" id="accountValue"><span class="currency-symbol">€</span><span class="value-major">3</span><span class="value-minor">,215.94</span></div>
-        </div>
-        <button type="button" class="account-plus-btn" id="accountPlusBtn" aria-label="Add funds"></button>
-      </div>
-
-      <div class="stats">
-        <div>
-          <div class="label">Total Profit</div>
-          <div class="stat-value" id="profit">↗ €315,94</div>
-        </div>
-        <div>
-          <div class="label">Rate of Return</div>
-          <div class="stat-value" id="returnRate">↗ 10,89%</div>
-        </div>
-      </div>
-
-      <div class="pill"><span class="dot"></span><span id="netDeposits">€2.900,00 Net deposits</span></div>
-    </section>
-
-        <section class="chart-card full-bleed-section" id="chartCard">
+    <section class="chart-shell" id="portfolio">
       <div class="chart-meta">
-        <div class="chart-date" id="chartDate">Vandaag</div>
-        <div class="chart-mini-value" id="chartMiniValue">€0</div>
+        <div class="chart-meta-date" id="chartDate">—</div>
+        <div class="chart-meta-value" id="chartMiniValue">€0</div>
       </div>
-
-      <svg id="chartSvg" viewBox="0 0 360 190" preserveAspectRatio="none">
+      <svg id="chartSvg" viewBox="0 0 360 200" preserveAspectRatio="none" aria-label="Portfolio performance chart">
         <defs>
-          <linearGradient id="fill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stop-color="#2aa8ff" stop-opacity=".30"/>
-            <stop offset="100%" stop-color="#2aa8ff" stop-opacity="0"/>
+          <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#28a8ef" stop-opacity=".28"/>
+            <stop offset="100%" stop-color="#28a8ef" stop-opacity="0"/>
           </linearGradient>
         </defs>
         <g id="gridGroup"></g>
-        <path id="area" fill="url(#fill)"></path>
-        <polyline id="line" fill="none" stroke="#2aa8ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        <line id="markerLine" x1="0" y1="20" x2="0" y2="176" stroke="rgba(255,255,255,.32)" stroke-width="1.4"></line>
-        <circle id="markerDot" cx="0" cy="0" r="5.5" fill="#ffffff" stroke="#2aa8ff" stroke-width="3.5"></circle>
+        <path id="area" fill="url(#chartFill)"></path>
+        <polyline id="line" fill="none" stroke="#28a8ef" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        <line id="markerLine" x1="0" y1="18" x2="0" y2="178" stroke="rgba(255,255,255,.28)" stroke-width="1"></line>
+        <circle id="markerDot" cx="0" cy="0" r="4.5" fill="#fff" stroke="#28a8ef" stroke-width="3"></circle>
       </svg>
-
-      <div class="chart-axis-right" aria-hidden="true">
-        <span>3K</span>
-        <span>2.5K</span>
-        <span>2K</span>
-        <span>1.5K</span>
-        <span>1K</span>
-        <span>500</span>
-        <span>0</span>
-        <span>-500</span>
-      </div>
-
-      <div class="tabs">
-        <span>1D</span><span>1W</span><span>1M</span><span class="active">3M</span><span>1Y</span><span>MAX</span>
+      <div class="axis-right" id="axisRight"></div>
+      <div class="range-tabs" aria-label="Chart range">
+        <button class="range-btn" data-range="1M">1M</button>
+        <button class="range-btn active" data-range="3M">3M</button>
+        <button class="range-btn" data-range="1Y">1Y</button>
+        <button class="range-btn" data-range="MAX">MAX</button>
       </div>
     </section>
 
-    <section class="cash-card full-bleed-section" aria-label="Cash balance">
-      <div class="cash-details">
-        <div class="cash-label">Cash</div>
-        <div class="cash-value">€129.91</div>
-      </div>
-      <button type="button" class="cash-deposit-btn" id="depositBtn">Deposit</button>
-    </section>
-
-    <section class="panel full-bleed-section portfolio-panel">
-      <div class="panel-title">Portfolio</div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th></th><th>Date</th>
-              <th>Deposits</th>
-              <th>Value</th>
-              <th>Month %</th>
-              <th>Profit</th>
-              <th>ROI</th>
-            </tr>
-          </thead>
-          <tbody id="portfolioTable"></tbody>
-        </table>
-      </div>
-      <div class="portfolio-card-list" id="portfolioCards"></div>
-    </section>
-     <section class="panel">
-      <div class="panel-title">Simulation</div>
-      <div class="input-grid">
-        <div>
-          <label>Initial investment</label>
-          <input id="startAmount" type="number" value="2900" min="0">
-        </div>
-        <div>
-          <label>Annual return %</label>
-          <input id="annualReturn" type="number" value="23.6" step="0.1">
-        </div>
-        <div>
-          <label>Monthly deposit</label>
-          <input id="monthlyDeposit" type="number" value="100" min="0">
-        </div>
-        <div>
-          <label>Period</label>
-          <select id="years">
-            <option>1</option><option>2</option><option>3</option><option>5</option><option selected>7</option><option>10</option>
-          </select>
-        </div>
-
-        <div class="volatility-control">
-          <div class="volatility-head">
-            <label for="volatilityInput">Market fluctuation</label>
-            <span id="volatilityValue">100%</span>
-          </div>
-          <input id="volatilityInput" type="range" min="0" max="300" value="100" step="5">
-          <div class="volatility-scale">
-            <span>Low</span>
-            <span>High</span>
-          </div>
-        </div>
+    <section class="section">
+      <div class="cash-card card">
+        <div><div class="cash-label">Cash</div><div class="cash-value">€129.91</div></div>
+        <button class="primary-btn" id="depositBtn">Deposit</button>
       </div>
     </section>
 
- </main>
-  <div class="toast" id="toast"></div>
+    <section class="section">
+      <div class="section-head"><div class="section-title">Performance</div><button class="section-link" data-open-projection>Projection</button></div>
+      <div class="performance-grid" id="performanceGrid"></div>
+    </section>
 
-  <nav class="bottom-nav">
-    <span class="active">⌂</span><span>◔</span><span>▣</span><span>☰</span>
+    <section class="section">
+      <div class="projection-callout card">
+        <div>
+          <strong>Portfolio projection</strong>
+          <p>Model how deposits, time and assumed return could affect your portfolio.</p>
+        </div>
+        <button class="ghost-btn" data-open-projection>Open</button>
+      </div>
+    </section>
+
+    <section class="section" id="activity">
+      <div class="section-head"><div class="section-title">Recent activity</div></div>
+      <div class="activity-list card" id="activityList"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div class="section-title">Performance history</div><button class="section-link" id="historyToggle">View all</button></div>
+      <div class="history-list card" id="historyList"></div>
+    </section>
+
+    <section class="section" id="account">
+      <div class="section-head"><div class="section-title">Account</div></div>
+      <div class="account-card card">
+        <div class="account-line"><span>Account type</span><span>Investment account</span></div>
+        <div class="account-line"><span>Currency</span><span>EUR</span></div>
+        <div class="account-line"><span>Performance model</span><span>Demo simulation</span></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button class="nav-btn active" data-target="home">
+      <svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg><span>Home</span>
+    </button>
+    <button class="nav-btn" data-target="portfolio">
+      <svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>Portfolio</span>
+    </button>
+    <button class="nav-btn" data-target="activity">
+      <svg viewBox="0 0 24 24"><path d="M4 12h4l2-5 4 10 2-5h4"/></svg><span>Activity</span>
+    </button>
+    <button class="nav-btn" data-target="account">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.7-4.2 4.3-6 8-6s6.3 1.8 8 6"/></svg><span>Account</span>
+    </button>
   </nav>
 
+  <div class="modal-backdrop" id="projectionModal" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="projectionTitle">
+      <div class="sheet-head">
+        <div><h2 id="projectionTitle">Portfolio projection</h2><p>A planning tool based on assumed return, deposits and market fluctuation. It is not a forecast.</p></div>
+        <button class="close-btn" id="closeProjection" aria-label="Close">×</button>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label for="startAmount">Initial investment</label><input id="startAmount" type="number" value="2900" min="0"></div>
+        <div class="field"><label for="annualReturn">Annual return %</label><input id="annualReturn" type="number" value="23.6" step="0.1"></div>
+        <div class="field"><label for="monthlyDeposit">Monthly deposit</label><input id="monthlyDeposit" type="number" value="100" min="0"></div>
+        <div class="field"><label for="years">Period</label><select id="years"><option>1</option><option>2</option><option>3</option><option>5</option><option selected>7</option><option>10</option></select></div>
+        <div class="field full">
+          <label for="volatilityInput">Market fluctuation · <span id="volatilityValue">100%</span></label>
+          <input id="volatilityInput" type="range" min="0" max="300" value="100" step="5">
+          <div class="range-labels"><span>Low</span><span>Base</span><span>High</span></div>
+        </div>
+      </div>
+      <div class="projection-result">
+        <div class="k">Projected portfolio value</div>
+        <div class="v" id="projectionValue">€0</div>
+        <div class="sub" id="projectionSub">—</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
   <script>
-    const startAmount = document.getElementById('startAmount');
-    const annualReturn = document.getElementById('annualReturn');
-    const monthlyDeposit = document.getElementById('monthlyDeposit');
-    const years = document.getElementById('years');
-    const volatilityInput = document.getElementById('volatilityInput');
-    const volatilityValue = document.getElementById('volatilityValue');
-    const tbody = document.getElementById('portfolioTable');
-    const chartCard = document.getElementById('chartCard');
-    const chartSvg = document.getElementById('chartSvg');
+    const $ = id => document.getElementById(id);
+    const euro = value => new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2}).format(value);
+    const shortEuro = value => new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(value);
+    const pct = value => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+    const dateLabel = date => new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'2-digit'}).format(date);
 
-    let rows = [];
-    let chartPoints = [];
-    let selectedIndex = 83;
+    const startAmount=$('startAmount'), annualReturn=$('annualReturn'), monthlyDeposit=$('monthlyDeposit'), years=$('years');
+    const volatilityInput=$('volatilityInput'), volatilityValue=$('volatilityValue');
+    const chartSvg=$('chartSvg'), chartShell=document.querySelector('.chart-shell');
 
-    const euro = value => new Intl.NumberFormat('nl-NL', {
-      style: 'currency', currency: 'EUR'
-    }).format(value);
+    let rows=[];
+    let visibleRows=[];
+    let chartPoints=[];
+    let selectedIndex=0;
+    let activeRange='3M';
+    let historyExpanded=false;
 
-    const dateLabel = date => {
-      const dd = String(date.getDate()).padStart(2, '0');
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const yy = String(date.getFullYear()).slice(-2);
-      return `${dd}/${mm}/${yy}`;
-    };
-
-
-    function formatFeaturedAccountValue(value) {
-      const formatted = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(value);
-
-      const comma = formatted.indexOf(',');
-      const dot = formatted.indexOf('.');
-      const splitAt = comma >= 0 ? comma : dot;
-
-      const major = splitAt >= 0 ? formatted.slice(0, splitAt) : formatted;
-      const minor = splitAt >= 0 ? formatted.slice(splitAt) : '';
-
-      return `
-        <span class="currency-symbol">€</span>
-        <span class="value-major">${major}</span>
-        <span class="value-minor">${minor}</span>
-      `;
+    function marketNoise(month){
+      const wave1=Math.sin(month*.85)*.012;
+      const wave2=Math.sin(month*1.95+1.6)*.008;
+      const wave3=Math.sin(month*.31+2.2)*.006;
+      const pseudo=Math.sin(month*12.9898)*43758.5453;
+      const noise=(pseudo-Math.floor(pseudo)-.5)*.014;
+      const dips={7:-.018,14:-.024,23:-.020,31:-.026,44:-.022,53:-.028,67:-.020,78:-.026,88:-.018};
+      return (wave1+wave2+wave3+noise+(dips[month]||0))*(Number(volatilityInput.value||100)/100);
     }
 
-    function calculateSeries() {
-      const start = Number(startAmount.value || 0);
-      const yearly = Number(annualReturn.value || 0) / 100;
-      const deposit = Number(monthlyDeposit.value || 0);
-      let totalMonths = Number(years.value) * 12;
-      if (Number(years.value) === 7) totalMonths = 91;
-      const baseMonthlyRate = Math.pow(1 + yearly, 1 / 12) - 1;
-      const startDate = new Date(2019, 0, 1);
+    function calculateSeries(){
+      const start=Number(startAmount.value||0);
+      const yearly=Number(annualReturn.value||0)/100;
+      const deposit=Number(monthlyDeposit.value||0);
+      let totalMonths=Number(years.value)*12;
+      if(Number(years.value)===7) totalMonths=91;
+      const baseMonthlyRate=Math.pow(1+yearly,1/12)-1;
+      const startDate=new Date(2019,0,1);
+      let value=start, invested=start;
+      const result=[];
 
-      let value = start;
-      let invested = start;
-      const result = [];
-
-      // Meer schommelingen, maar geen negatieve maandrendementen.
-      // De maandelijkse return blijft minimaal positief, zodat de portfolio niet per maand in de min gaat.
-      function marketNoise(month) {
-        const wave1 = Math.sin(month * 0.85) * 0.012;
-        const wave2 = Math.sin(month * 1.95 + 1.6) * 0.008;
-        const wave3 = Math.sin(month * 0.31 + 2.2) * 0.006;
-        const pseudoRandom = Math.sin(month * 12.9898) * 43758.5453;
-        const noise = (pseudoRandom - Math.floor(pseudoRandom) - 0.5) * 0.014;
-
-        // Korte zachtere terugvallen, maar niet genoeg om maandresultaat negatief te maken.
-        const dips = {
-          7: -0.018,
-          14: -0.024,
-          23: -0.020,
-          31: -0.026,
-          44: -0.022,
-          53: -0.028,
-          67: -0.020,
-          78: -0.026,
-          88: -0.018
-        };
-
-        const fluctuationMultiplier = Number(volatilityInput.value || 100) / 100;
-        return (wave1 + wave2 + wave3 + noise + (dips[month] || 0)) * fluctuationMultiplier;
+      for(let m=1;m<=totalMonths;m++){
+        if(m>1){value+=deposit;invested+=deposit}
+        const monthlyReturn=Math.max(.0025,baseMonthlyRate+marketNoise(m));
+        value*=1+monthlyReturn;
+        const d=new Date(startDate);
+        d.setMonth(startDate.getMonth()+m-1);
+        const seed=Math.sin(m*9.731)*10000;
+        d.setDate(Math.floor((seed-Math.floor(seed))*26)+1);
+        const profit=value-invested;
+        result.push({month:m,date:d,invested,value,monthlyReturn,profit,roi:invested>0?profit/invested*100:0});
       }
-
-      for (let m = 1; m <= totalMonths; m++) {
-        if (m > 1) {
-          value += deposit;
-          invested += deposit;
-        }
-
-        const monthlyReturn = Math.max(0.0025, baseMonthlyRate + marketNoise(m));
-        value *= (1 + monthlyReturn);
-
-        const d = new Date(startDate);
-        d.setMonth(startDate.getMonth() + m - 1);
-        const daySeed = Math.sin(m * 9.731) * 10000;
-        const randomDay = Math.floor((daySeed - Math.floor(daySeed)) * 26) + 1;
-        d.setDate(randomDay);
-
-        const profit = value - invested;
-
-        result.push({
-          month: m,
-          date: d,
-          invested,
-          value,
-          monthlyReturn,
-          profit,
-          roi: invested > 0 ? profit / invested * 100 : 0
-        });
-      }
-
       return result;
     }
 
-    function drawChart() {
-      const plot = {
-        left: 4,
-        right: 348,
-        top: 20,
-        bottom: 176
-      };
+    function rangeCount(range){
+      if(range==='1M') return 2;
+      if(range==='3M') return 4;
+      if(range==='1Y') return 13;
+      return rows.length;
+    }
 
-      const values = rows.map(r => r.value);
-      const min = Math.min(...values) * .98;
-      const max = Math.max(...values) * 1.02;
+    function applyRange(){
+      const count=Math.min(rangeCount(activeRange),rows.length);
+      visibleRows=rows.slice(-count);
+      selectedIndex=visibleRows.length-1;
+      drawChart();
+      updateChartSelection();
+    }
 
-      chartPoints = rows.map((r, i) => {
-        const x = rows.length === 1
-          ? plot.left
-          : plot.left + (i / (rows.length - 1)) * (plot.right - plot.left);
-        const y = plot.bottom - ((r.value - min) / (max - min || 1)) * (plot.bottom - plot.top);
-        return { x, y };
-      });
+    function drawChart(){
+      const plot={left:5,right:337,top:24,bottom:177};
+      const values=visibleRows.map(r=>r.value);
+      let min=Math.min(...values),max=Math.max(...values);
+      if(min===max){min*=.98;max*=1.02}
+      const pad=(max-min)*.12;
+      min-=pad;max+=pad;
 
-      const gridLines = 4;
-      const gridMarkup = Array.from({ length: gridLines }, (_, i) => {
-        const y = plot.top + ((plot.bottom - plot.top) / (gridLines - 1)) * i;
+      chartPoints=visibleRows.map((r,i)=>({
+        x:visibleRows.length===1?plot.left:plot.left+(i/(visibleRows.length-1))*(plot.right-plot.left),
+        y:plot.bottom-((r.value-min)/(max-min||1))*(plot.bottom-plot.top)
+      }));
+
+      $('gridGroup').innerHTML=Array.from({length:4},(_,i)=>{
+        const y=plot.top+((plot.bottom-plot.top)/3)*i;
         return `<line x1="${plot.left}" y1="${y}" x2="${plot.right}" y2="${y}"></line>`;
       }).join('');
-      document.getElementById('gridGroup').innerHTML = gridMarkup;
 
-      const pointsText = chartPoints.map(p => `${p.x},${p.y}`).join(' ');
-      document.getElementById('line').setAttribute('points', pointsText);
-      document.getElementById('area').setAttribute('d', `M${plot.left},${plot.bottom} L${pointsText} L${plot.right},${plot.bottom} Z`);
+      const points=chartPoints.map(p=>`${p.x},${p.y}`).join(' ');
+      $('line').setAttribute('points',points);
+      $('area').setAttribute('d',`M${plot.left},${plot.bottom} L${points} L${plot.right},${plot.bottom} Z`);
+
+      $('axisRight').innerHTML=Array.from({length:5},(_,i)=>{
+        const value=max-((max-min)/4)*i;
+        return `<span>${value>=1000?(value/1000).toFixed(value>=10000?0:1)+'K':Math.round(value)}</span>`;
+      }).join('');
     }
 
-    function updateUI() {
-      const current = rows[selectedIndex];
-      const point = chartPoints[selectedIndex];
-      if (!current || !point) return;
-
-      const isPositive = current.profit >= 0;
-
-      document.getElementById('accountValue').innerHTML = formatFeaturedAccountValue(current.value);
-      document.getElementById('profit').textContent = `${isPositive ? '↗' : '↘'} ${euro(current.profit)}`;
-      document.getElementById('profit').className = `stat-value ${isPositive ? 'positive' : 'negative'}`;
-      document.getElementById('returnRate').textContent = `${isPositive ? '↗' : '↘'} ${current.roi.toFixed(2)}%`;
-      document.getElementById('returnRate').className = `stat-value ${isPositive ? 'positive' : 'negative'}`;
-      document.getElementById('netDeposits').textContent = `${euro(current.invested)} Net deposits`;
-
-      document.getElementById('chartDate').textContent = dateLabel(current.date);
-      document.getElementById('chartMiniValue').textContent = euro(current.value);
-
-      document.getElementById('markerLine').setAttribute('x1', point.x);
-      document.getElementById('markerLine').setAttribute('x2', point.x);
-      document.getElementById('markerLine').setAttribute('y1', 20);
-      document.getElementById('markerLine').setAttribute('y2', 176);
-      document.getElementById('markerDot').setAttribute('cx', point.x);
-      document.getElementById('markerDot').setAttribute('cy', point.y);
-
-      [...tbody.querySelectorAll('tr')].forEach((tr, i) => {
-        tr.classList.toggle('active-row', i === selectedIndex);
-      });
-      document.querySelectorAll('.portfolio-card').forEach((card, i) => {
-        card.classList.toggle('active-row', i === selectedIndex);
-      });
+    function updateChartSelection(){
+      const current=visibleRows[selectedIndex];
+      const point=chartPoints[selectedIndex];
+      if(!current||!point) return;
+      $('chartDate').textContent=dateLabel(current.date);
+      $('chartMiniValue').textContent=euro(current.value);
+      $('markerLine').setAttribute('x1',point.x);$('markerLine').setAttribute('x2',point.x);
+      $('markerDot').setAttribute('cx',point.x);$('markerDot').setAttribute('cy',point.y);
     }
 
-    function renderTable() {
-      tbody.innerHTML = rows.map((r, i) => `
-        <tr data-index="${i}">
-          <td style='width:32px;text-align:center;color:#8b96a6;font-size:15px;'>▾</td><td>${dateLabel(r.date)}</td>
-          <td>${euro(r.invested)}</td>
-          <td>${euro(r.value)}</td>
-          <td class="${r.monthlyReturn >= 0 ? 'positive' : 'negative'}">${(r.monthlyReturn * 100).toFixed(2)}%</td>
-          <td class="${r.profit >= 0 ? 'positive' : 'negative'}">${euro(r.profit)}</td>
-          <td class="${r.roi >= 0 ? 'positive' : 'negative'}">${r.roi.toFixed(2)}%</td>
-        </tr>
-      `).join('');
-
-      tbody.querySelectorAll('tr').forEach(tr => {
-        tr.addEventListener('click', () => {
-          selectedIndex = Number(tr.dataset.index);
-          updateUI();
-        });
-      });
-
-      const cards = document.getElementById('portfolioCards');
-      cards.innerHTML = rows.map((r, i) => `
-        <article class="portfolio-card ${i === selectedIndex ? 'active-row' : ''}" data-index="${i}">
-          <div class="portfolio-card-top">
-            <div class="portfolio-card-date">⌄ ${dateLabel(r.date)}</div>
-            <div class="portfolio-card-value">${euro(r.value)}</div>
-          </div>
-          <div class="portfolio-card-grid">
-            <div><span class="k">Monthly</span><span class="v ${r.monthlyReturn >= 0 ? 'positive' : 'negative'}">${(r.monthlyReturn * 100).toFixed(2)}%</span></div>
-            <div><span class="k">Profit</span><span class="v ${r.profit >= 0 ? 'positive' : 'negative'}">${euro(r.profit)}</span></div>
-            <div><span class="k">ROI</span><span class="v ${r.roi >= 0 ? 'positive' : 'negative'}">${r.roi.toFixed(2)}%</span></div>
-          </div>
-        </article>
-      `).join('');
-
-      cards.querySelectorAll('.portfolio-card').forEach(card => {
-        card.addEventListener('click', () => {
-          selectedIndex = Number(card.dataset.index);
-          updateUI();
-          renderTable();
-        });
-      });
+    function performanceBetween(months){
+      const end=rows.at(-1);
+      const startIndex=Math.max(0,rows.length-1-months);
+      const start=rows[startIndex];
+      if(!end||!start) return 0;
+      return (end.value-start.value)/start.value*100;
     }
 
-    function selectByPointer(clientX) {
-      const rect = chartSvg.getBoundingClientRect();
-      const svgX = ((clientX - rect.left) / rect.width) * 360;
-      const plotLeft = 4;
-      const plotRight = 348;
-      const clamped = Math.max(plotLeft, Math.min(svgX, plotRight));
-      const ratio = (clamped - plotLeft) / (plotRight - plotLeft || 1);
-      selectedIndex = Math.round(ratio * (rows.length - 1));
-      selectedIndex = Math.max(0, Math.min(selectedIndex, rows.length - 1));
-      updateUI();
+    function updateSummary(){
+      const current=rows.at(-1); if(!current) return;
+      $('accountValue').textContent=euro(current.value);
+      $('profit').textContent=`${current.profit>=0?'+':''}${euro(current.profit)}`;
+      $('profit').className=`v ${current.profit>=0?'positive':'negative'}`;
+      $('returnRate').textContent=pct(current.roi);
+      $('returnRate').className=`v ${current.roi>=0?'positive':'negative'}`;
+      $('netDeposits').textContent=shortEuro(current.invested);
+
+      const metrics=[
+        ['1 month',performanceBetween(1),'Latest month'],
+        ['3 months',performanceBetween(3),'Trailing period'],
+        ['1 year',performanceBetween(12),'Trailing period'],
+        ['All time',current.roi,'Since start']
+      ];
+      $('performanceGrid').innerHTML=metrics.map(([label,value,sub])=>`<div class="performance-card card"><div class="k">${label}</div><div class="v ${value>=0?'positive':'negative'}">${pct(value)}</div><div class="sub">${sub}</div></div>`).join('');
+
+      $('projectionValue').textContent=euro(current.value);
+      $('projectionSub').textContent=`${shortEuro(current.invested)} contributed · ${pct(current.roi)} simulated return over ${years.value} years.`;
     }
 
-    chartCard.addEventListener('pointerdown', e => {
-      chartCard.setPointerCapture(e.pointerId);
-      selectByPointer(e.clientX);
-    });
-
-    chartCard.addEventListener('pointermove', e => {
-      if (e.buttons === 1 || e.pointerType === 'touch') {
-        selectByPointer(e.clientX);
-      }
-    });
-
-    function render() {
-      rows = calculateSeries();
-      selectedIndex = Math.min(selectedIndex, rows.length - 1);
-      drawChart();
-      renderTable();
-      updateUI();
+    function renderHistory(){
+      const source=historyExpanded?rows.slice().reverse():rows.slice(-5).reverse();
+      $('historyList').innerHTML=source.map(r=>`<div class="history-row"><div class="history-date">${dateLabel(r.date)}<span>${shortEuro(r.invested)} deposited</span></div><div class="history-value">${euro(r.value)}</div><div class="history-return ${r.monthlyReturn>=0?'positive':'negative'}">${pct(r.monthlyReturn*100)}</div></div>`).join('');
+      $('historyToggle').textContent=historyExpanded?'Show less':'View all';
     }
 
-    [startAmount, annualReturn, monthlyDeposit, years, volatilityInput].forEach(el => {
-      el.addEventListener('input', () => {
-        volatilityValue.textContent = `${volatilityInput.value}%`;
-        render();
-      });
-    });
-
-    volatilityValue.textContent = `${volatilityInput.value}%`;
-    render();
-  
-
-    const toast = document.getElementById('toast');
-    function showToast(message){
-      toast.textContent = message;
-      toast.classList.add('show');
-      clearTimeout(window.toastTimer);
-      window.toastTimer = setTimeout(() => toast.classList.remove('show'), 1700);
+    function renderActivity(){
+      const latest=rows.slice(-4).reverse();
+      $('activityList').innerHTML=latest.map((r,i)=>{
+        const deposit=Number(monthlyDeposit.value||0);
+        const contribution=i===0?'Portfolio updated':'Monthly contribution';
+        const detail=i===0?dateLabel(r.date):`${dateLabel(r.date)} · recurring deposit`;
+        const amount=i===0?`${pct(r.monthlyReturn*100)}`:`+${euro(deposit)}`;
+        return `<div class="activity-item"><div class="activity-icon"><svg viewBox="0 0 24 24">${i===0?'<path d="M4 16l5-5 4 4 7-8"/><path d="M16 7h4v4"/>':'<path d="M12 5v14M5 12h14"/>'}</svg></div><div class="activity-copy"><strong>${contribution}</strong><span>${detail}</span></div><div class="activity-amount ${i===0&&r.monthlyReturn>=0?'positive':''}">${amount}</div></div>`;
+      }).join('');
     }
-    document.getElementById('depositBtn').addEventListener('click', () => showToast('Deposit opened'));
 
+    function renderAll(){
+      rows=calculateSeries();
+      updateSummary();
+      applyRange();
+      renderHistory();
+      renderActivity();
+      volatilityValue.textContent=`${volatilityInput.value}%`;
+    }
 
-    document.getElementById('accountPlusBtn').addEventListener('click', () => showToast('Add funds opened'));
-    document.getElementById('notificationBtn').addEventListener('click', () => showToast('No new notifications'));
-    document.getElementById('settingsBtn').addEventListener('click', () => showToast('Settings opened'));
+    function selectByPointer(clientX){
+      const rect=chartSvg.getBoundingClientRect();
+      const svgX=((clientX-rect.left)/rect.width)*360;
+      const clamped=Math.max(5,Math.min(svgX,337));
+      const ratio=(clamped-5)/(337-5);
+      selectedIndex=Math.max(0,Math.min(visibleRows.length-1,Math.round(ratio*(visibleRows.length-1))));
+      updateChartSelection();
+    }
 
-document.addEventListener('DOMContentLoaded',()=>{
-  const sel=document.getElementById('accountSelect');
-  if(sel){
-    sel.addEventListener('change',()=>{
-      const idx=sel.selectedIndex;
-      const accounts=['20876414','14590382','78241659','39187520'];
-      sel.options[0].text='Account: '+accounts[idx];
-    });
-  }
-});
+    chartShell.addEventListener('pointerdown',e=>{chartShell.setPointerCapture(e.pointerId);selectByPointer(e.clientX)});
+    chartShell.addEventListener('pointermove',e=>{if(e.buttons===1||e.pointerType==='touch')selectByPointer(e.clientX)});
 
-</script>
+    document.querySelectorAll('.range-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      activeRange=btn.dataset.range;
+      document.querySelectorAll('.range-btn').forEach(b=>b.classList.toggle('active',b===btn));
+      applyRange();
+    }));
+
+    const modal=$('projectionModal');
+    function openProjection(){modal.classList.add('open');modal.setAttribute('aria-hidden','false')}
+    function closeProjection(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}
+    document.querySelectorAll('[data-open-projection]').forEach(btn=>btn.addEventListener('click',openProjection));
+    $('closeProjection').addEventListener('click',closeProjection);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeProjection()});
+
+    [startAmount,annualReturn,monthlyDeposit,years,volatilityInput].forEach(el=>el.addEventListener('input',renderAll));
+
+    $('historyToggle').addEventListener('click',()=>{historyExpanded=!historyExpanded;renderHistory()});
+
+    const toast=$('toast');
+    function showToast(message){toast.textContent=message;toast.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>toast.classList.remove('show'),1500)}
+    $('depositBtn').addEventListener('click',()=>showToast('Deposit flow opened'));
+    $('accountPlusBtn').addEventListener('click',()=>showToast('Deposit flow opened'));
+    $('notificationBtn').addEventListener('click',()=>showToast('No new notifications'));
+    $('settingsBtn').addEventListener('click',()=>showToast('Settings opened'));
+
+    document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      $(btn.dataset.target).scrollIntoView({behavior:'smooth',block:'start'});
+    }));
+
+    renderAll();
+  </script>
 </body>
 </html>
